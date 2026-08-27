@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.prisma
+prisma/dev.db
+prisma/dev.db-journal
+data/bidledger.db
+data/bidledger.db-wal
+data/bidledger.db-shm
+.env
+*.log
+.DS_Store

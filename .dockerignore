@@ -1,0 +1,7 @@
+node_modules
+.next
+data/bidledger.db
+data/bidledger.db-wal
+data/bidledger.db-shm
+.env
+.git
