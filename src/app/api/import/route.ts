@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   const buf = Buffer.from(await file.arrayBuffer());
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buf);
+  await wb.xlsx.load(buf as unknown as ArrayBuffer);
   const sheetNames = wb.worksheets.map((s) => s.name);
   const preferred =
     sheetNames.find((n) => /final/i.test(n)) ||

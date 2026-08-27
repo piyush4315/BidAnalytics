@@ -23,7 +23,7 @@ export default async function LotDetailPage({ params }: { params: { id: string }
   const r = lot.rollup;
   const rates: TaxRates = lot.calcSnapshot ? { ...DEFAULT_RATES, ...JSON.parse(lot.calcSnapshot) } : DEFAULT_RATES;
   const logs = await prisma.auditLog.findMany({
-    where: { OR: [{ entityId: lot.id }, { entityId: { in: lot.payments.map((p) => p.id) } }] },
+    where: { OR: [{ entityId: lot.id }, { entityId: { in: lot.payments.map((p: { id: string }) => p.id) } }] },
     include: { user: true },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -102,7 +102,7 @@ export default async function LotDetailPage({ params }: { params: { id: string }
       type="SECURITY_DEPOSIT"
       write={write}
       canRemove={canDelete(user.role)}
-      rows={lot.payments.filter((p) => p.type === "SECURITY_DEPOSIT")}
+      rows={lot.payments.filter((p: { type: string }) => p.type === "SECURITY_DEPOSIT")}
     />
   );
 
@@ -118,7 +118,7 @@ export default async function LotDetailPage({ params }: { params: { id: string }
       type="FINAL_PAYMENT"
       write={write}
       canRemove={canDelete(user.role)}
-      rows={lot.payments.filter((p) => p.type === "FINAL_PAYMENT")}
+      rows={lot.payments.filter((p: { type: string }) => p.type === "FINAL_PAYMENT")}
     />
   );
 
@@ -128,7 +128,7 @@ export default async function LotDetailPage({ params }: { params: { id: string }
         <p className="text-sm text-stone-600">No invoice recorded for this lot.</p>
       ) : (
         <ul className="divide-y divide-stone-100 rounded-sm border border-stone-200 bg-white">
-          {lot.invoices.map((inv) => (
+          {lot.invoices.map((inv: { id: string; invoiceNumber: string; invoiceDate: Date | null; amount: number; status: string }) => (
             <li key={inv.id} className="grid gap-2 px-4 py-3 sm:grid-cols-4">
               <div>
                 <p className="text-xs text-stone-500">Number</p>
@@ -177,7 +177,7 @@ export default async function LotDetailPage({ params }: { params: { id: string }
         <p className="text-sm text-stone-600">No SAP document posted for this lot.</p>
       ) : (
         <ul className="divide-y divide-stone-100 rounded-sm border border-stone-200 bg-white">
-          {lot.sapDocuments.map((d) => (
+          {lot.sapDocuments.map((d: { id: string; documentNumber: string; documentType: string | null; documentDate: Date | null; amount: number; postingStatus: string }) => (
             <li key={d.id} className="grid gap-2 px-4 py-3 sm:grid-cols-4">
               <div>
                 <p className="text-xs text-stone-500">Document</p>

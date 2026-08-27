@@ -9,7 +9,7 @@ export function KpiCard({
   money,
 }: {
   label: string;
-  value: React.ReactNode;
+  value?: React.ReactNode;
   hint?: string;
   tone?: "neutral" | "good" | "warn" | "bad" | "info";
   money?: number;

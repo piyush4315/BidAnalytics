@@ -32,6 +32,7 @@ export type TaxRates = {
   tds194HRate: number;
   cashReceivableFactor: number;
   securityDepositRate: number;
+  defaultGstTdsRate: number;
 };
 
 export const DEFAULT_RATES: TaxRates = {
@@ -43,6 +44,7 @@ export const DEFAULT_RATES: TaxRates = {
   tds194HRate: 0.02,
   cashReceivableFactor: 1.1765,
   securityDepositRate: 0.25,
+  defaultGstTdsRate: 0,
 };
 
 /** Excel ROUND — half away from zero. */
@@ -113,10 +115,7 @@ export function calculateLotFinancials(
   };
 }
 
-export function applyCalculation<T extends Record<string, unknown>>(
-  lot: T,
-  calc: LotCalculation,
-): T & Record<string, number | string> {
+export function applyCalculation<T extends Record<string, unknown>>(lot: T, calc: LotCalculation): T {
   return {
     ...lot,
     gstAmount: calc.gstAmount,
@@ -320,24 +319,16 @@ function gstTdsPct(rate: number) {
   return `${(rate * 100).toFixed(rate === 0 ? 0 : 2)}%`;
 }
 
-export function ratesFromConfig(cfg: {
-  gstRate: number;
-  tcsRate: number;
-  tds194ORate: number;
-  serviceChargeRate: number;
-  serviceChargeGstFactor: number;
-  tds194HRate: number;
-  cashReceivableFactor: number;
-  securityDepositRate: number;
-}): TaxRates {
+export function ratesFromConfig(cfg: Partial<TaxRates> & Record<string, unknown>): TaxRates {
   return {
-    gstRate: cfg.gstRate,
-    tcsRate: cfg.tcsRate,
-    tds194ORate: cfg.tds194ORate,
-    serviceChargeRate: cfg.serviceChargeRate,
-    serviceChargeGstFactor: cfg.serviceChargeGstFactor,
-    tds194HRate: cfg.tds194HRate,
-    cashReceivableFactor: cfg.cashReceivableFactor,
-    securityDepositRate: cfg.securityDepositRate,
+    gstRate: Number(cfg.gstRate ?? DEFAULT_RATES.gstRate),
+    tcsRate: Number(cfg.tcsRate ?? DEFAULT_RATES.tcsRate),
+    tds194ORate: Number(cfg.tds194ORate ?? DEFAULT_RATES.tds194ORate),
+    serviceChargeRate: Number(cfg.serviceChargeRate ?? DEFAULT_RATES.serviceChargeRate),
+    serviceChargeGstFactor: Number(cfg.serviceChargeGstFactor ?? DEFAULT_RATES.serviceChargeGstFactor),
+    tds194HRate: Number(cfg.tds194HRate ?? DEFAULT_RATES.tds194HRate),
+    cashReceivableFactor: Number(cfg.cashReceivableFactor ?? DEFAULT_RATES.cashReceivableFactor),
+    securityDepositRate: Number(cfg.securityDepositRate ?? DEFAULT_RATES.securityDepositRate),
+    defaultGstTdsRate: Number(cfg.defaultGstTdsRate ?? DEFAULT_RATES.defaultGstTdsRate),
   };
 }

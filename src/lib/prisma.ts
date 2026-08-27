@@ -61,10 +61,11 @@ function iso(d: Date | string | null | undefined) {
   return d;
 }
 
-function serialize(v: unknown): unknown {
+function serialize(v: unknown): string | number | bigint | null {
   if (v instanceof Date) return v.toISOString();
   if (typeof v === "boolean") return v ? 1 : 0;
-  return v;
+  if (v === undefined) return null;
+  return v as string | number | bigint | null;
 }
 
 function decodeRow(row: Record<string, unknown> | undefined | null) {
@@ -78,6 +79,9 @@ function decodeRow(row: Record<string, unknown> | undefined | null) {
 }
 
 type Where = Record<string, unknown> | undefined;
+// Row shape is dynamic (SQLite helper, not generated Prisma Client).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DbRow = any;
 
 function compileWhere(where: Where): { sql: string; params: unknown[] } {
   if (!where || Object.keys(where).length === 0) return { sql: "1=1", params: [] };
@@ -147,7 +151,7 @@ function selectRows(table: string, args: { where?: Where; orderBy?: unknown; tak
   const w = compileWhere(args.where);
   let sql = `SELECT * FROM ${table} WHERE ${w.sql}${orderSql(args.orderBy)}`;
   if (args.take) sql += ` LIMIT ${Number(args.take)}`;
-  const rows = db.prepare(sql).all(...w.params) as Record<string, unknown>[];
+  const rows = db.prepare(sql).all(...(w.params as never[])) as Record<string, unknown>[];
   return rows.map((r) => decodeRow(r)!) as Record<string, unknown>[];
 }
 
@@ -195,28 +199,28 @@ function hydrate(table: string, rows: Record<string, unknown>[], include: unknow
 
 function model(table: string) {
   return {
-    findMany(args: { where?: Where; include?: unknown; orderBy?: unknown; take?: number } = {}) {
+    findMany(args: { where?: Where; include?: unknown; orderBy?: unknown; take?: number } = {}): Promise<DbRow[]> {
       const rows = selectRows(table, args);
       if (args.include) hydrate(table, rows, args.include);
-      return Promise.resolve(rows as never);
+      return Promise.resolve(rows as DbRow[]);
     },
-    findFirst(args: { where?: Where; include?: unknown; orderBy?: unknown } = {}) {
+    findFirst(args: { where?: Where; include?: unknown; orderBy?: unknown } = {}): Promise<DbRow | null> {
       const rows = selectRows(table, { ...args, take: 1 });
       if (args.include) hydrate(table, rows, args.include);
-      return Promise.resolve((rows[0] as never) ?? null);
+      return Promise.resolve((rows[0] as DbRow) ?? null);
     },
-    findUnique(args: { where: Where; include?: unknown; select?: unknown }) {
+    findUnique(args: { where: Where; include?: unknown; select?: unknown }): Promise<DbRow | null> {
       const rows = selectRows(table, { where: args.where, take: 1 });
       if (args.include) hydrate(table, rows, args.include);
       const row = rows[0] ?? null;
       if (row && args.select) {
-        const picked: Record<string, unknown> = {};
+        const picked: DbRow = {};
         for (const k of Object.keys(args.select as object)) picked[k] = row[k];
-        return Promise.resolve(picked as never);
+        return Promise.resolve(picked);
       }
-      return Promise.resolve(row as never);
+      return Promise.resolve(row as DbRow | null);
     },
-    create(args: { data: Record<string, unknown> }) {
+    create(args: { data: Record<string, unknown> }): Promise<DbRow> {
       const db = openDb();
       const data = { ...args.data };
       if (!data.id) data.id = newId();
@@ -225,17 +229,17 @@ function model(table: string) {
       if (table === "ImportJob" && !data.createdAt) data.createdAt = new Date().toISOString();
       const keys = Object.keys(data);
       const sql = `INSERT INTO ${table} (${keys.join(",")}) VALUES (${keys.map(() => "?").join(",")})`;
-      db.prepare(sql).run(...keys.map((k) => serialize(data[k])));
-      return Promise.resolve(decodeRow(data)! as never);
+      db.prepare(sql).run(...(keys.map((k) => serialize(data[k])) as never[]));
+      return Promise.resolve(decodeRow(data)! as DbRow);
     },
-    update(args: { where: { id: string }; data: Record<string, unknown> }) {
+    update(args: { where: { id: string }; data: Record<string, unknown> }): Promise<DbRow> {
       const db = openDb();
-      const data = { ...args.data, updatedAt: iso(new Date()) };
+      const data: Record<string, unknown> = { ...args.data, updatedAt: iso(new Date()) };
       const keys = Object.keys(data);
       const sql = `UPDATE ${table} SET ${keys.map((k) => `${k}=?`).join(",")} WHERE id=?`;
-      db.prepare(sql).run(...keys.map((k) => serialize(data[k])), args.where.id);
+      db.prepare(sql).run(...(keys.map((k) => serialize(data[k])) as never[]), args.where.id);
       const row = selectRows(table, { where: { id: args.where.id }, take: 1 })[0];
-      return Promise.resolve(row as never);
+      return Promise.resolve((row ?? {}) as DbRow);
     },
     deleteMany() {
       openDb().prepare(`DELETE FROM ${table}`).run();
@@ -244,7 +248,7 @@ function model(table: string) {
     count(args: { where?: Where } = {}) {
       const db = openDb();
       const w = compileWhere(args.where);
-      const row = db.prepare(`SELECT COUNT(*) as c FROM ${table} WHERE ${w.sql}`).get(...w.params) as { c: number };
+      const row = db.prepare(`SELECT COUNT(*) as c FROM ${table} WHERE ${w.sql}`).get(...(w.params as never[])) as { c: number };
       return Promise.resolve(row.c);
     },
   };

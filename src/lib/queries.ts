@@ -22,7 +22,7 @@ export async function getLots() {
     include: lotInclude,
     orderBy: { lotNumber: "asc" },
   });
-  return lots.map((lot) => ({ ...lot, rollup: rollupLot(lot) }));
+  return lots.map((lot) => ({ ...lot, rollup: rollupLot(lot) })) as Array<(typeof lots)[number] & { rollup: ReturnType<typeof rollupLot> }>;
 }
 
 export async function getLot(id: string) {
@@ -34,7 +34,7 @@ export async function getLot(id: string) {
     },
   });
   if (!lot) return null;
-  return { ...lot, rollup: rollupLot(lot) };
+  return { ...lot, rollup: rollupLot(lot) } as typeof lot & { rollup: ReturnType<typeof rollupLot> };
 }
 
 export async function getDashboard() {

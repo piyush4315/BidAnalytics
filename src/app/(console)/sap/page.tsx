@@ -29,25 +29,6 @@ export default async function SapPage() {
     amount: d.amount,
     status: d.postingStatus,
   }));
-  const columns: Column<(typeof rows)[0]>[] = [
-    { key: "doc", header: "SAP document", sortValue: (r) => r.documentNumber, cell: (r) => <span className="font-semibold">{r.documentNumber}</span> },
-    { key: "type", header: "Type", sortValue: (r) => r.type || "", cell: (r) => r.type || "—" },
-    {
-      key: "lot",
-      header: "Lot",
-      sortValue: (r) => r.lotNumber,
-      cell: (r) => (
-        <Link href={`/lots/${r.lotId}`} className="text-copper-800 hover:underline">
-          {r.lotNumber}
-        </Link>
-      ),
-    },
-    { key: "buyer", header: "Buyer", sortValue: (r) => r.buyer, cell: (r) => r.buyer },
-    { key: "inv", header: "Invoice", sortValue: (r) => r.invoice, cell: (r) => r.invoice },
-    { key: "date", header: "Doc date", sortValue: (r) => r.date || "", cell: (r) => formatDate(r.date) },
-    { key: "amt", header: "Amount", align: "right", sortValue: (r) => r.amount || 0, cell: (r) => <Money value={r.amount} /> },
-    { key: "st", header: "Posting", sortValue: (r) => r.status, cell: (r) => <StatusBadge status={r.status} /> },
-  ];
   return (
     <div className="space-y-5">
       <PageHeader eyebrow="Documents" title="SAP documents" description="Posted documents, pending postings, and lots still without a SAP number." />
@@ -56,7 +37,7 @@ export default async function SapPage() {
         <KpiCard label="Pending posting" value={String(pending.length)} tone={pending.length ? "warn" : "good"} />
         <KpiCard label="Lots without SAP" value={String(missing.length)} tone={missing.length ? "warn" : "good"} />
       </section>
-      <DataTable rows={rows} columns={columns} exportName="sap-documents" searchText={(r) => `${r.documentNumber} ${r.lotNumber} ${r.buyer} ${r.invoice}`} />
+      <SapTable rows={rows} />
       {missing.length ? (
         <section>
           <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-stone-500">Lots without SAP document</h2>
