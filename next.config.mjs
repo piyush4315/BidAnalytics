@@ -4,7 +4,6 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ["exceljs", "bcryptjs"],
-    allowedDevOrigins: ["*.e2b.app", "*.trycloudflare.com", "*.onrender.com", "*.up.railway.app"],
   },
 };
 
