@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("VIEWER")
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  auditLogs    AuditLog[]
+  payments     Payment[]
+  imports      ImportJob[]
+}
+
+model TaxConfig {
+  id                     String   @id @default(cuid())
+  gstRate                Float    @default(0.18)
+  tcsRate                Float    @default(0.02)
+  tds194ORate            Float    @default(0.001)
+  serviceChargeRate      Float    @default(0.0225)
+  serviceChargeGstFactor Float    @default(1.18)
+  tds194HRate            Float    @default(0.02)
+  cashReceivableFactor   Float    @default(1.1765)
+  securityDepositRate    Float    @default(0.25)
+  defaultGstTdsRate      Float    @default(0)
+  notes                  String?
+  updatedById            String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Auction {
+  id          String    @id @default(cuid())
+  number      String    @unique
+  title       String?
+  description String?
+  auctionDate DateTime?
+  status      String    @default("OPEN")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  lots        Lot[]
+}
+
+model Buyer {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  contactPerson String?
+  mobile        String?
+  email         String?
+  gstNumber     String?
+  pan           String?
+  address       String?
+  city          String?
+  state         String?
+  pincode       String?
+  bankName      String?
+  bankAccount   String?
+  ifsc          String?
+  isActive      Boolean   @default(true)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  lots          Lot[]
+}
+
+model Lot {
+  id                      String    @id @default(cuid())
+  lotNumber               String    @unique
+  auctionId               String
+  auction                 Auction   @relation(fields: [auctionId], references: [id])
+  buyerId                 String?
+  buyer                   Buyer?    @relation(fields: [buyerId], references: [id])
+  name                    String
+  quantity                Float
+  unit                    String
+  status                  String    @default("SOLD")
+  rate                    Float
+  materialValue           Float
+  gstTdsRate              Float     @default(0)
+  gstAmount               Float     @default(0)
+  materialValueWithGst    Float     @default(0)
+  tcsAmount               Float     @default(0)
+  tds194O                 Float     @default(0)
+  serviceChargeGross      Float     @default(0)
+  tds194H                 Float     @default(0)
+  netServiceCharge        Float     @default(0)
+  serviceChargeToMstc     Float     @default(0)
+  gstTdsAmount            Float     @default(0)
+  totalReceivable         Float     @default(0)
+  securityDepositExpected Float     @default(0)
+  finalPaymentExpected    Float     @default(0)
+  calcSnapshot            String?
+  notes                   String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  deletedAt               DateTime?
+  payments                Payment[]
+  invoices                Invoice[]
+  sapDocuments            SapDocument[]
+
+  @@index([auctionId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  lotId       String
+  lot         Lot       @relation(fields: [lotId], references: [id])
+  type        String
+  amount      Float
+  receivedOn  DateTime?
+  paymentRef  String?
+  bankRef     String?
+  remarks     String?
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([lotId])
+  @@index([type])
+  @@index([receivedOn])
+}
+
+model Invoice {
+  id            String    @id @default(cuid())
+  lotId         String
+  lot           Lot       @relation(fields: [lotId], references: [id])
+  invoiceNumber String
+  invoiceDate   DateTime?
+  amount        Float?
+  status        String    @default("GENERATED")
+  remarks       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  sapDocuments  SapDocument[]
+
+  @@index([lotId])
+  @@index([invoiceNumber])
+}
+
+model SapDocument {
+  id             String    @id @default(cuid())
+  lotId          String
+  lot            Lot       @relation(fields: [lotId], references: [id])
+  invoiceId      String?
+  invoice        Invoice?  @relation(fields: [invoiceId], references: [id])
+  documentNumber String
+  documentType   String?
+  documentDate   DateTime?
+  amount         Float?
+  postingStatus  String    @default("POSTED")
+  remarks        String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([lotId])
+  @@index([documentNumber])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  entityType String
+  entityId   String
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model ImportJob {
+  id          String   @id @default(cuid())
+  filename    String
+  sheetName   String?
+  status      String
+  mapping     String?
+  result      String?
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}

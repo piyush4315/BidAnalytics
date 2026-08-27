@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: bidledger
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: node scripts/boot.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
