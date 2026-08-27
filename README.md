@@ -4,6 +4,15 @@ Internal SaaS for MSTC-style scrap auction bid sheets: lots, buyers, tax calcula
 
 The Combined Bid Sheet dated **23.08.2026** (auctions 21977–21980) is the source of the seeded operating data. The application is not an Excel viewer — it is a normalised operations ledger with a configurable calculation engine.
 
+## GitHub backup
+
+Full source is on branch `arena/01a040d6-bidanalytics` (PR #1). Offline HTML snapshot (opens in any browser, no server):
+
+- File in repo: [`bidledger.html`](./bidledger.html)
+- Direct view: https://cdn.jsdelivr.net/gh/piyush4315/BidAnalytics@70d9f77/bidledger.html
+
+SQLite runtime DB (`data/bidledger.db`) is not committed; reseed with `npx tsx prisma/seed.ts`.
+
 ## Sign in
 
 | Role | Email | Password |
